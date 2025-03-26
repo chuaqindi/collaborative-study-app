@@ -14,7 +14,7 @@ export default function LoginScreen({ navigation }: any) {
       setMessage(`Login failed: ${error.message}`)
     } else {
       setMessage('Logged in successfully!')
-      navigation.navigate('Home') // we'll build this next
+      navigation.navigate('Main') // we'll build this next
     }
   }
 
