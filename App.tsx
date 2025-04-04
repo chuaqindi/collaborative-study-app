@@ -8,6 +8,8 @@ import SignUpScreen from './lib/screens/SignUpScreen'
 import LoginScreen from './lib/screens/LoginScreen'
 import HomeScreen from './lib/screens/HomeScreen'
 import FriendsScreen from './lib/screens/FriendsScreen'
+import FriendsTasksScreen from './lib/screens/FriendsTasksScreen'
+
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -33,6 +35,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Tasks" component={HomeScreen} />
       <Tab.Screen name="Friends" component={FriendsScreen} />
+      <Tab.Screen name="FriendsTasks" component={FriendsTasksScreen} />
     </Tab.Navigator>
   )
 }

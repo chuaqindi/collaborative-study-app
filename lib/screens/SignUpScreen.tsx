@@ -11,17 +11,24 @@ export default function SignUpScreen({ navigation }: any) {
 
   // Function to handle sign up
   const handleSignUp = async () => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-    })
-
+    });
+  
     if (error) {
-      setMessage(`Sign up failed: ${error.message}`)
+      setMessage(`Sign up failed: ${error.message}`);
     } else {
-      setMessage('Check your email to confirm sign up!')
+      // Insert into profiles table manually
+      const { user } = data;
+      if (user) {
+        await supabase.from('profiles').insert([{ id: user.id, email: user.email }]);
+      }
+  
+      setMessage('Check your email to confirm sign up!');
     }
-  }
+  };
+  
 
   return (
     <View style={styles.container}>

@@ -1,75 +1,93 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native'
-import { supabase } from '../supabase'
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { supabase } from '../supabase';
 
 export default function FriendsScreen() {
-  const [friendEmail, setFriendEmail] = useState('')
-  const [sentRequests, setSentRequests] = useState<any[]>([])
-  const [receivedRequests, setReceivedRequests] = useState<any[]>([])
+  const [friendEmail, setFriendEmail] = useState('');
+  const [sentRequests, setSentRequests] = useState<any[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const fetchFriends = async () => {
-    const { data: userData } = await supabase.auth.getUser()
-    const userId = userData.user?.id
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData.user?.id;
+    if (!currentUserId) return;
 
+    setUserId(currentUserId);
+    console.log('🔑 Current user ID:', currentUserId);
+
+    // Fetch sent requests
     const { data: sent, error: sentError } = await supabase
       .from('friends')
-      .select('*, profiles:profiles!friends_friend_id_fkey(email)')
-      .eq('user_id', userId)
+      .select('*, friend:profiles!friends_friend_id_fkey(email)')
+      .eq('user_id', currentUserId);
 
+    if (sentError) {
+      console.error('❌ Sent Fetch Error:', sentError);
+    } else {
+      setSentRequests(sent || []);
+    }
+
+    // Fetch received requests
     const { data: received, error: receivedError } = await supabase
       .from('friends')
-      .select('*, profiles:profiles!friends_user_id_fkey(email)')
-      .eq('friend_id', userId)
+      .select('*, sender:profiles!friends_user_id_fkey(email)')
+      .eq('friend_id', currentUserId);
 
-    if (!sentError) setSentRequests(sent)
-    if (!receivedError) setReceivedRequests(received)
-  }
+    if (receivedError) {
+      console.error('❌ Received Fetch Error:', receivedError);
+    } else {
+      setReceivedRequests(received || []);
+    }
+  };
 
   const addFriend = async () => {
-    const trimmedEmail = friendEmail.trim()
-    console.log("🔍 Searching for email:", trimmedEmail)
-  
+    const trimmedEmail = friendEmail.trim();
+    if (!trimmedEmail) return;
+
+    console.log('🔍 Searching for email:', trimmedEmail);
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', trimmedEmail)
-      .single()
-  
-    console.log("🧪 Lookup Result:", profile, error)
-  
+      .single();
+
     if (error || !profile) {
-      Alert.alert('Error', 'User not found')
-      return
+      Alert.alert('Error', 'User not found');
+      return;
     }
-  
-    const { data: userData } = await supabase.auth.getUser()
-  
-    await supabase.from('friends').insert({
-      user_id: userData.user?.id,
+
+    const { data: userData } = await supabase.auth.getUser();
+    const currentUserId = userData.user?.id;
+
+    if (currentUserId === profile.id) {
+      Alert.alert('Error', 'You cannot send a friend request to yourself.');
+      return;
+    }
+
+    const { error: insertError } = await supabase.from('friends').insert({
+      user_id: currentUserId,
       friend_id: profile.id,
       status: 'pending',
-    })
-  
-    setFriendEmail('')
-    fetchFriends()
-  }
-  
-  
-  
-  
+    });
+
+    if (insertError) {
+      Alert.alert('Error', 'Friend request failed.');
+      console.error(insertError);
+    } else {
+      setFriendEmail('');
+      fetchFriends();
+    }
+  };
 
   const respondToRequest = async (requestId: number, status: 'accepted' | 'rejected') => {
-    const { error } = await supabase
-      .from('friends')
-      .update({ status })
-      .eq('id', requestId)
-
-    if (!error) fetchFriends()
-  }
+    const { error } = await supabase.from('friends').update({ status }).eq('id', requestId);
+    if (!error) fetchFriends();
+  };
 
   useEffect(() => {
-    fetchFriends()
-  }, [])
+    fetchFriends();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -84,11 +102,11 @@ export default function FriendsScreen() {
 
       <Text style={styles.subtitle}>Received Requests</Text>
       <FlatList
-        data={receivedRequests.filter(r => r.status === 'pending')}
+        data={receivedRequests.filter((r) => r.status === 'pending')}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={styles.friendItem}>
-            <Text>From: {item.profiles?.email}</Text>
+            <Text>From: {item.sender?.email}</Text>
             <View style={styles.row}>
               <TouchableOpacity onPress={() => respondToRequest(item.id, 'accepted')}>
                 <Text style={styles.accept}>Accept</Text>
@@ -107,12 +125,12 @@ export default function FriendsScreen() {
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <Text style={styles.friendItem}>
-            To: {item.profiles?.email} - Status: {item.status}
+            To: {item.friend?.email} - Status: {item.status}
           </Text>
         )}
       />
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -124,4 +142,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 20 },
   accept: { color: 'green', fontWeight: 'bold' },
   reject: { color: 'red', fontWeight: 'bold' },
-})
+});
