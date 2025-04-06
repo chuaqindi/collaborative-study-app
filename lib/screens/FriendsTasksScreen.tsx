@@ -60,6 +60,8 @@ export default function FriendsTasksScreen() {
 
   return (
     <View style={styles.container}>
+
+      
       <Text style={styles.title}>Friends' Remaining Tasks</Text>
       <FlatList
         data={friendsTasks}

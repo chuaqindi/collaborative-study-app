@@ -9,7 +9,7 @@ import LoginScreen from './lib/screens/LoginScreen'
 import HomeScreen from './lib/screens/HomeScreen'
 import FriendsScreen from './lib/screens/FriendsScreen'
 import FriendsTasksScreen from './lib/screens/FriendsTasksScreen'
-import HomePageScreen from './lib/screens/HomeScreen'
+import HomePageScreen from './lib/screens/HomePageScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()

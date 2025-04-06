@@ -10,6 +10,11 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npm install
    ```
 
+   ```
+   npx expo install expo-linear-gradient
+   ```
+
+
 2. Start the app
 
    ```bash
