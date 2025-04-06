@@ -53,7 +53,7 @@ export default function HomeScreen() {
           <Text style={styles.sectionHeaderFont}>Study Streak</Text>
 
           <LinearGradient colors={['#4f46e5', '#6366f1']} style={styles.streakCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-            <Text style={styles.streakNumber}>7</Text>
+            <Text style={styles.streakNumber}>1</Text>
             <Text style={styles.streakLabel}>days!</Text>
           </LinearGradient>
         </View>

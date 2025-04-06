@@ -148,7 +148,11 @@ export default function FriendsScreen() {
       </View>
 
 
-      <Button title="Send Friend Request" onPress={addFriend} />
+      <TouchableOpacity style={styles.button} onPress={addFriend}>
+        <Text style={styles.buttonText}>Send Friend Request</Text>
+      </TouchableOpacity>
+
+      
       <Text style={styles.subtitle}>Received Requests</Text>
 
       <FlatList
@@ -219,6 +223,25 @@ const styles = StyleSheet.create({
   accept: { color: 'green', fontWeight: 'bold' },
   reject: { color: 'red', fontWeight: 'bold' },
 
-
+  button: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 30,
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5, // Android shadow
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
 
 });

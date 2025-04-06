@@ -22,9 +22,13 @@ function MainTabs() {
           let iconName
 
           if (route.name === 'Tasks') {
-            iconName = 'home'
+            iconName = 'document-text-outline'
           } else if (route.name === 'Friends') {
             iconName = 'people'
+          } else if (route.name === 'Home Page') {
+            iconName = 'home'
+          } else if (route.name === 'Friends Tasks') {
+            iconName = 'library-outline'
           }
 
           return <Ionicons name={iconName as any} size={size} color={color} />
@@ -33,10 +37,10 @@ function MainTabs() {
         tabBarInactiveTintColor: 'gray',
       })}
     >
-      <Tab.Screen name="HomePage" component={HomePageScreen} />
+      <Tab.Screen name="Home Page" component={HomePageScreen} />
       <Tab.Screen name="Tasks" component={HomeScreen} />
       <Tab.Screen name="Friends" component={FriendsScreen} />
-      <Tab.Screen name="FriendsTasks" component={FriendsTasksScreen} />
+      <Tab.Screen name="Friends Tasks" component={FriendsTasksScreen} />
 
 
     </Tab.Navigator>
