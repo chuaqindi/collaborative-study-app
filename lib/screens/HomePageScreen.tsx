@@ -1,10 +1,34 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image , FlatList, TouchableOpacity, Alert, TextInput} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
-
+import { supabase } from '../supabase';
+import { getTaskCompletionCount } from '../../utils/taskUtils';
 
 export default function HomeScreen() {
+
+  const [tasks, setTasks] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (!error) setTasks(data || []);
+      else console.error('Error fetching tasks:', error);
+    };
+
+    fetchTasks();
+  }, []);
+
+  const { completedCount, totalCount } = getTaskCompletionCount(tasks);
+
   return (
     
     
@@ -43,8 +67,7 @@ export default function HomeScreen() {
           </View>
           
           <LinearGradient colors={['#7c3aed', '#a855f7']} style={styles.statCard} start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
-            <Text style={styles.statNumber}>5/7</Text>
-            <MaterialIcons name="check-circle" size={28} color="white" />
+          <Text style={styles.statNumber}>{completedCount}/{totalCount}</Text>
             <Text style={styles.statLabel}>Tasks Completed</Text>
           </LinearGradient>
         </View>
