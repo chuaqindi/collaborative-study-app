@@ -44,20 +44,25 @@ export default function HomeScreen() {
         </LinearGradient>
   
         <View style={styles.section}>
-          <View style = {styles.sectionHeaderStyle}>
-            <Text style={styles.sectionHeaderFont}>Today's Focus !</Text>
-            <Text style={styles.viewAllButton} onPress={() => console.log('View all [Today Focus] pressed!')}>View All</Text>
+          <View style={styles.sectionHeaderStyle}>
+            <Text style={styles.sectionHeaderFont}>Today's Focus!</Text>
+            <Text style={styles.viewAllButton} onPress={() => console.log('View all [Today Focus] pressed!')}>
+              View All
+            </Text>
           </View>
 
-          <LinearGradient colors={['#fbbf24', '#f59e0b']} style={styles.taskCard}  start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
-            <Text style={[styles.text, { fontWeight: 'bold' }]}>SC2008: Computer Network</Text>
-            <Text style={styles.text}>Complete Tutorial 5</Text>
-          </LinearGradient>
-
-          <LinearGradient colors={['#fbbf24', '#f59e0b']} style={styles.taskCard}  start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
-            <Text style={[styles.text , {fontWeight:'bold'}]}>SC2005: Operating Systems</Text>
-            <Text style={styles.text}>Read Week 7 Lecture Slides</Text>
-          </LinearGradient>
+          {tasks.slice(0, 2).map((task) => (
+            <LinearGradient
+              key={task.id}
+              colors={['#fbbf24', '#f59e0b']}
+              style={styles.taskCard}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <Text style={[styles.text, { fontWeight: 'bold' }]}>To do: </Text>
+              <Text style={styles.text}>{task.title}</Text>
+            </LinearGradient>
+          ))}
         </View>
 
         <View style={styles.section}>
