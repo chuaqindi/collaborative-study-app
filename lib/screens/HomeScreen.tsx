@@ -1,152 +1,185 @@
-// lib/screens/HomeScreen.tsx
-
-import React, { useState, useEffect } from 'react'
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
-import { supabase } from '../supabase'
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { supabase } from '../supabase';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-type Task = {
-  id: string;
-  title: string;
-  is_done: boolean;
-  user_id: string;
-};
+
 
 export default function HomeScreen() {
-  const [title, setTitle] = useState('')
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [title, setTitle] = useState('');
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+  const [editedTitle, setEditedTitle] = useState('');
 
   const fetchTasks = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return;
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: false })
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
 
-    console.log('Fetched Tasks:', data);
-    if (!error && data) {
-      setTasks(data as Task[]);
-    }
-  }
+    if (!error) setTasks(data || []);
+    else console.error('Error fetching tasks:', error);
+  };
 
   const addTask = async () => {
-    console.log('Add Task Pressed');
-  
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    const user_id = userData.user?.id;
-  
-    console.log('User ID:', user_id);
-    console.log('Task Title:', title);
-  
-    if (!user_id) {
-      console.error('No user is logged in.');
-      return;
-    }
-  
-    const { data, error } = await supabase.from('tasks').insert({
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId || !title.trim()) return;
+
+    const { error } = await supabase.from('tasks').insert({
+      user_id: userId,
       title,
-      user_id,
       is_done: false,
     });
-  
+
+    if (!error) {
+      setTitle('');
+      fetchTasks();
+    } else {
+      console.error('Error adding task:', error);
+    }
+  };
+
+  const deleteTask = async (id: number) => {
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
-      console.error('Insert Error:', error.message);
+      console.error('Error deleting task:', error);
       return;
     }
-  
-    console.log('Task inserted successfully');
-    setTitle('');
     fetchTasks();
   };
-  
 
-  const toggleDone = async (taskId: string, currentStatus: boolean) => {
+  const toggleCompleted = async (id: number, currentStatus: boolean) => {
+    const { error } = await supabase.from('tasks').update({ is_done: !currentStatus }).eq('id', id);
+    if (error) {
+      console.error('Error toggling completion:', error);
+      return;
+    }
+    fetchTasks();
+  };
+
+  const startEditing = (task: any) => {
+    setEditingTask(task);
+    setEditedTitle(task.title);
+  };
+
+  const saveEdit = async () => {
+    if (!editingTask || !editedTitle.trim()) return;
     const { error } = await supabase
       .from('tasks')
-      .update({ is_done: !currentStatus })
-      .eq('id', taskId)
+      .update({ title: editedTitle })
+      .eq('id', editingTask.id);
 
-    if (!error) fetchTasks()
-  }
+    if (error) {
+      console.error('Error editing task:', error);
+      return;
+    }
+
+    fetchTasks();
+    setEditingTask(null);
+    setEditedTitle('');
+  };
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    fetchTasks();
+  }, []);
+
+  const completedCount = tasks.filter(task => task.is_done).length;
+  const totalCount = tasks.length;
 
   return (
     <View style={styles.container}>
       
-        <LinearGradient colors={['#4f46e5', '#7c3aed']} style={styles.HeaderGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-          <View style={styles.headerTopRow}>
-            <Text style={styles.Header}>👋 My Tasks</Text>
-          </View>
-        </LinearGradient>
+    <LinearGradient colors={['#4f46e5', '#7c3aed']} 
+                    style={styles.HeaderGradient} 
+                    start={{ x: 0, y: 0 }} 
+                    end={{ x: 1, y: 1 }}
+                    >
+      <View style={styles.headerTopRow}>
+        <Text style={styles.Header}>👋 My Tasks</Text>
+      </View>
+    </LinearGradient>
 
-        <Text style = {styles.addTaskHeader}>Add Tasks</Text>
-        <View style = {styles.taskInputSection}>
-          <TextInput
-            placeholder="Enter task title"
-            value={title}
-            onChangeText={setTitle}
-            style={styles.input}
-            placeholderTextColor={'black'}
-          />
-        </View>
-        <TouchableOpacity style={styles.button} onPress={addTask}>
-          <Text style={styles.buttonText}>Add Task</Text>
-        </TouchableOpacity>
+    <Text style = {styles.currentTaskHeader}>Current Tasks</Text>
 
-        <Text style = {styles.addTaskHeader}>Current Tasks</Text>
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => toggleDone(item.id, item.is_done)}>
-              <LinearGradient 
-                colors={['#fbbf24', '#f59e0b']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.task}
-                >
-                <Text style={[styles.taskText, item.is_done && styles.done]}>
-                  {item.title}
-                </Text>
-
-              </LinearGradient>
+    <FlatList
+      data={tasks}
+      keyExtractor={item => item.id.toString()}
+      renderItem={({ item }) => (
+        <View style={styles.taskItem}>
+          <Text style={[styles.taskText, item.is_done && { textDecorationLine: 'line-through', color: 'gray' }]}>
+            {item.title}
+          </Text>
+          <View style={styles.actions}>
+            <TouchableOpacity onPress={() => toggleCompleted(item.id, item.is_done)}>
+              <Ionicons
+                name={item.is_done ? 'checkmark-circle' : 'ellipse-outline'}
+                size={24}
+                color={item.is_done ? 'green' : 'gray'}
+              />
             </TouchableOpacity>
-          )}
-        />
-      
+
+            <TouchableOpacity onPress={() => deleteTask(item.id)}>
+              <Ionicons name="trash" size={24} color="gray" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => startEditing(item)}>
+              <Ionicons name="pencil" size={24} color="gray" />
+            </TouchableOpacity>
+          </View>
+        </View>
+        )}
+      />
+
+
+      <Text style = {styles.addTaskHeader}>Add Tasks</Text>
+      <TextInput
+        placeholder="New Task"
+        value={title}
+        onChangeText={setTitle}
+        style={styles.input}
+        placeholderTextColor={'black'}
+      />
+
+      <TouchableOpacity onPress={addTask} style={styles.button}>
+        <Text style={styles.buttonText}>Add Task</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.summary}>
+      <Text style={styles.countText}>{`${completedCount}/${totalCount}`}</Text> tasks completed
+      </Text>
+
+      {editingTask && (
+        <View style={styles.editContainer}>
+          <TextInput
+            value={editedTitle}
+            onChangeText={setEditedTitle}
+            style={styles.input}
+          />
+          <TouchableOpacity onPress={saveEdit} style={styles.button}>
+            <Text style={styles.buttonText}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 0, marginTop: 0 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  
-  input: { borderWidth: 1, borderRadius: 5, padding: 10, marginBottom: 10, height: 50, fontSize: 18},
-  scrollview: { flex: 1},
-  HeaderGradient: {
-    paddingHorizontal: 24,
-    paddingVertical: 50,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-  },
-  Header: {fontSize: 24,color: 'white',fontWeight: '700',},
-  headerTopRow: {flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center',},
-
-
-  addTaskHeader: {paddingTop: 20, fontSize: 24, fontWeight:'bold', paddingLeft: 10,},
-  taskInputSection: {paddingTop: 10, paddingLeft:10, paddingRight: 10},
+  taskItem: { padding: 10, borderBottomWidth: 1, borderColor: '#ccc', marginTop: 20, },
+  taskText: { fontSize: 16 },
+  actions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5 },
   button: {
     backgroundColor: '#4CAF50',
     paddingVertical: 12,
-    paddingHorizontal: 28,
+    paddingHorizontal: 70,
     borderRadius: 30,
     alignItems: 'center',
     alignSelf: 'center',
@@ -163,23 +196,39 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 1,
   },
-  
-  
-  task: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    marginVertical: 6,
-    marginHorizontal: 12,
-    borderRadius: 14,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+  input: { borderWidth: 1, padding: 10, borderRadius: 5, marginTop: 10, marginLeft: 10, marginRight: 10 },
+  editContainer: { marginTop: 20 },
+  summary: {
+    textAlign: 'center',
+    marginTop: 20,          // to shift the 'add task' words up LOL
+    marginBottom: 20,
+    fontSize: 20,          // 🔼 Bigger text
+    fontWeight: '600',     // Slightly bolder
+    color: '#374151',      // Tailwind gray-700 (looks nice)
+
   },
-  taskText: {fontSize: 18,color: '#333',fontWeight:500,},
-  done: { textDecorationLine: 'line-through', color: 'gray' },
+  
+  countText: {
+    fontWeight: '800',
+    color: '#10B981',      // Emerald green
+    fontSize: 22,          // Make the number even more prominent
+  },
 
 
+  HeaderGradient: {
+    paddingHorizontal: 24,
+    paddingVertical: 50,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  Header: {fontSize: 24,color: 'white',fontWeight: '700',},
+  headerTopRow: {flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center',},
+  currentTaskHeader: {paddingTop: 20, fontSize: 24, fontWeight:'bold', paddingLeft: 10,},
+  addTaskHeader: {paddingTop: 0, fontSize: 24, fontWeight:'bold', paddingLeft: 10,},
 
-})
+});

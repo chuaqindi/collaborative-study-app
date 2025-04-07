@@ -24,40 +24,26 @@ export default function FriendsScreen() {
     if (!currentUserId) return;
 
     setUserId(currentUserId);
-    console.log('🔑 Current user ID:', currentUserId);
 
-    // Fetch sent requests
-    const { data: sent, error: sentError } = await supabase
+    const { data: sent } = await supabase
       .from('friends')
       .select('*, friend:profiles!friends_friend_id_fkey(email)')
       .eq('user_id', currentUserId);
 
-    if (sentError) {
-      console.error('❌ Sent Fetch Error:', sentError);
-    } else {
-      setSentRequests(sent || []);
-    }
+    setSentRequests(sent || []);
 
-    // Fetch received requests
-    const { data: received, error: receivedError } = await supabase
+    const { data: received } = await supabase
       .from('friends')
       .select('*, sender:profiles!friends_user_id_fkey(email)')
       .eq('friend_id', currentUserId);
 
-    if (receivedError) {
-      console.error('❌ Received Fetch Error:', receivedError);
-    } else {
-      setReceivedRequests(received || []);
-    }
+    setReceivedRequests(received || []);
   };
 
   const addFriend = async () => {
-    const trimmedEmail = friendEmail.trim().toLowerCase();
+    const trimmedEmail = friendEmail.trim();
     if (!trimmedEmail) return;
 
-    console.log('🔍 Searching for email:', trimmedEmail);
-
-    // Step 1: Look up friend's profile
     const { data: profile, error } = await supabase
       .from('profiles')
       .select('id')
@@ -72,29 +58,30 @@ export default function FriendsScreen() {
     const { data: userData } = await supabase.auth.getUser();
     const currentUserId = userData.user?.id;
 
-    if (!currentUserId || currentUserId === profile.id) {
+    if (currentUserId === profile.id) {
       Alert.alert('Error', 'You cannot send a friend request to yourself.');
       return;
     }
 
-    // Step 2: Check for existing friend request in either direction
-    const { data: existing, error: existingError } = await supabase
+    // Check for existing relationship
+    const { data: existing, error: checkError } = await supabase
       .from('friends')
-      .select('*')
+      .select()
       .or(
         `and(user_id.eq.${currentUserId},friend_id.eq.${profile.id}),and(user_id.eq.${profile.id},friend_id.eq.${currentUserId})`
-      )
-      .maybeSingle();
-
-    if (existing && !existingError) {
-      Alert.alert(
-        'Error',
-        `A friend request already exists with status: ${existing.status}`
       );
-      return;
+
+    if (existing && existing.length > 0) {
+      const existingStatus = existing[0].status;
+      if (existingStatus === 'pending') {
+        Alert.alert('Info', 'Friend request already sent and pending.');
+        return;
+      } else if (existingStatus === 'accepted') {
+        Alert.alert('Info', 'You are already friends.');
+        return;
+      }
     }
 
-    // Step 3: Insert the friend request
     const { error: insertError } = await supabase.from('friends').insert({
       user_id: currentUserId,
       friend_id: profile.id,
@@ -102,7 +89,7 @@ export default function FriendsScreen() {
     });
 
     if (insertError) {
-      Alert.alert('Error', 'Failed to send friend request.');
+      Alert.alert('Error', 'Friend request failed.');
       console.error(insertError);
     } else {
       Alert.alert('Success', 'Friend request sent!');
@@ -111,15 +98,8 @@ export default function FriendsScreen() {
     }
   };
 
-  const respondToRequest = async (
-    requestId: number,
-    status: 'accepted' | 'rejected'
-  ) => {
-    const { error } = await supabase
-      .from('friends')
-      .update({ status })
-      .eq('id', requestId);
-
+  const respondToRequest = async (requestId: number, status: 'accepted' | 'rejected') => {
+    const { error } = await supabase.from('friends').update({ status }).eq('id', requestId);
     if (!error) fetchFriends();
   };
 
@@ -129,13 +109,11 @@ export default function FriendsScreen() {
 
   return (
     <View style={styles.container}>
-      
       <LinearGradient colors={['#4f46e5', '#7c3aed']} style={styles.headerGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerTopRow}>
           <Text style={styles.header}>👋 My Friends</Text>
         </View>
       </LinearGradient>
-
       <Text style = {styles.addFriendHeader}>Add Friend</Text>
       <View style = {styles.inputSection}>
       <TextInput
@@ -152,24 +130,19 @@ export default function FriendsScreen() {
         <Text style={styles.buttonText}>Send Friend Request</Text>
       </TouchableOpacity>
 
-      
-      <Text style={styles.subtitle}>Received Requests</Text>
 
+      <Text style={styles.subtitle}>Received Requests</Text>
       <FlatList
         data={receivedRequests.filter((r) => r.status === 'pending')}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => `${item.id}-received`}
         renderItem={({ item }) => (
           <View style={styles.friendItem}>
             <Text>From: {item.sender?.email}</Text>
             <View style={styles.row}>
-              <TouchableOpacity
-                onPress={() => respondToRequest(item.id, 'accepted')}
-              >
+              <TouchableOpacity onPress={() => respondToRequest(item.id, 'accepted')}>
                 <Text style={styles.accept}>Accept</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => respondToRequest(item.id, 'rejected')}
-              >
+              <TouchableOpacity onPress={() => respondToRequest(item.id, 'rejected')}>
                 <Text style={styles.reject}>Reject</Text>
               </TouchableOpacity>
             </View>
@@ -180,7 +153,7 @@ export default function FriendsScreen() {
       <Text style={styles.subtitle}>Sent Requests</Text>
       <FlatList
         data={sentRequests}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => `${item.id}-sent`}
         renderItem={({ item }) => (
           <Text style={styles.friendItem}>
             To: {item.friend?.email} - Status: {item.status}
