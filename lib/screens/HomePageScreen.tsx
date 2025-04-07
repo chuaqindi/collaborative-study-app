@@ -4,28 +4,33 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { supabase } from '../supabase';
 import { getTaskCompletionCount } from '../../utils/taskUtils';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
+
 
 export default function HomeScreen() {
 
   const [tasks, setTasks] = useState<any[]>([]);
+  const [showAllTasks, setShowAllTasks] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return;
+  useFocusEffect(
+    useCallback(() => {
+      const fetchTasks = async () => {
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id;
+        if (!userId) return;
 
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId);
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', userId);
 
-      if (!error) setTasks(data || []);
-      else console.error('Error fetching tasks:', error);
-    };
+        if (!error) setTasks(data || []);
+        else console.error('Error fetching tasks:', error);
+      };
 
     fetchTasks();
-  }, []);
+  }, []) );
 
   const { completedCount, totalCount } = getTaskCompletionCount(tasks);
 
@@ -46,12 +51,12 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style={styles.sectionHeaderStyle}>
             <Text style={styles.sectionHeaderFont}>Today's Focus!</Text>
-            <Text style={styles.viewAllButton} onPress={() => console.log('View all [Today Focus] pressed!')}>
-              View All
-            </Text>
+            <Text style={styles.viewAllButton} onPress={() => setShowAllTasks(!showAllTasks)}>
+      {showAllTasks ? 'Collapse' : 'View All'}
+    </Text>
           </View>
 
-          {tasks.slice(0, 2).map((task) => (
+          {(showAllTasks ? tasks : tasks.slice(0, 2)).map(task => (
             <LinearGradient
               key={task.id}
               colors={['#fbbf24', '#f59e0b']}
@@ -68,7 +73,6 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <View style = {styles.sectionHeaderStyle}>
             <Text style={styles.sectionHeaderFont}>Task Progress</Text>
-            <Text style={styles.viewAllButton} onPress={() => console.log('View all [Task Progress] pressed!')}>View All</Text>
           </View>
           
           <LinearGradient colors={['#7c3aed', '#a855f7']} style={styles.statCard} start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
