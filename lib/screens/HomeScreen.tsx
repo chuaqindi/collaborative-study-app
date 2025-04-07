@@ -1,107 +1,163 @@
-// lib/screens/HomeScreen.tsx
-
-import React, { useState, useEffect } from 'react'
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native'
-import { supabase } from '../supabase'
-
-type Task = {
-  id: string;
-  title: string;
-  is_done: boolean;
-  user_id: string;
-};
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { supabase } from '../supabase';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
-  const [title, setTitle] = useState('')
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [title, setTitle] = useState('');
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+  const [editedTitle, setEditedTitle] = useState('');
 
   const fetchTasks = async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return;
+
     const { data, error } = await supabase
       .from('tasks')
       .select('*')
-      .order('created_at', { ascending: false })
+      .eq('user_id', userId)
+      .order('id', { ascending: false });
 
-    console.log('Fetched Tasks:', data);
-    if (!error && data) {
-      setTasks(data as Task[]);
-    }
-  }
+    if (!error) setTasks(data || []);
+    else console.error('Error fetching tasks:', error);
+  };
 
   const addTask = async () => {
-    console.log('Add Task Pressed');
-  
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    const user_id = userData.user?.id;
-  
-    console.log('User ID:', user_id);
-    console.log('Task Title:', title);
-  
-    if (!user_id) {
-      console.error('No user is logged in.');
-      return;
-    }
-  
-    const { data, error } = await supabase.from('tasks').insert({
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId || !title.trim()) return;
+
+    const { error } = await supabase.from('tasks').insert({
+      user_id: userId,
       title,
-      user_id,
       is_done: false,
     });
-  
+
+    if (!error) {
+      setTitle('');
+      fetchTasks();
+    } else {
+      console.error('Error adding task:', error);
+    }
+  };
+
+  const deleteTask = async (id: number) => {
+    const { error } = await supabase.from('tasks').delete().eq('id', id);
     if (error) {
-      console.error('Insert Error:', error.message);
+      console.error('Error deleting task:', error);
       return;
     }
-  
-    console.log('Task inserted successfully');
-    setTitle('');
     fetchTasks();
   };
-  
 
-  const toggleDone = async (taskId: string, currentStatus: boolean) => {
+  const toggleCompleted = async (id: number, currentStatus: boolean) => {
+    const { error } = await supabase.from('tasks').update({ is_done: !currentStatus }).eq('id', id);
+    if (error) {
+      console.error('Error toggling completion:', error);
+      return;
+    }
+    fetchTasks();
+  };
+
+  const startEditing = (task: any) => {
+    setEditingTask(task);
+    setEditedTitle(task.title);
+  };
+
+  const saveEdit = async () => {
+    if (!editingTask || !editedTitle.trim()) return;
     const { error } = await supabase
       .from('tasks')
-      .update({ is_done: !currentStatus })
-      .eq('id', taskId)
+      .update({ title: editedTitle })
+      .eq('id', editingTask.id);
 
-    if (!error) fetchTasks()
-  }
+    if (error) {
+      console.error('Error editing task:', error);
+      return;
+    }
+
+    fetchTasks();
+    setEditingTask(null);
+    setEditedTitle('');
+  };
 
   useEffect(() => {
-    fetchTasks()
-  }, [])
+    fetchTasks();
+  }, []);
+
+  const completedCount = tasks.filter(task => task.is_done).length;
+  const totalCount = tasks.length;
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Tasks</Text>
 
+      <FlatList
+        data={tasks}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.taskItem}>
+            <Text style={[styles.taskText, item.is_done && { textDecorationLine: 'line-through', color: 'gray' }]}>
+              {item.title}
+            </Text>
+            <View style={styles.actions}>
+              <TouchableOpacity onPress={() => toggleCompleted(item.id, item.is_done)}>
+                <Ionicons
+                  name={item.is_done ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={24}
+                  color={item.is_done ? 'green' : 'gray'}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteTask(item.id)}>
+                <Ionicons name="trash" size={24} color="gray" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => startEditing(item)}>
+                <Ionicons name="pencil" size={24} color="gray" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      />
+
       <TextInput
-        placeholder="Enter task title"
+        placeholder="New Task"
         value={title}
         onChangeText={setTitle}
         style={styles.input}
       />
-      <Button title="Add Task" onPress={addTask} />
+      <TouchableOpacity onPress={addTask} style={styles.button}>
+        <Text style={styles.buttonText}>Add Task</Text>
+      </TouchableOpacity>
 
-      <FlatList
-        data={tasks}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => toggleDone(item.id, item.is_done)}>
-            <Text style={[styles.task, item.is_done && styles.done]}>
-              {item.title}
-            </Text>
+      <Text style={styles.summary}>{`${completedCount}/${totalCount} tasks completed`}</Text>
+
+      {editingTask && (
+        <View style={styles.editContainer}>
+          <TextInput
+            value={editedTitle}
+            onChangeText={setEditedTitle}
+            style={styles.input}
+          />
+          <TouchableOpacity onPress={saveEdit} style={styles.button}>
+            <Text style={styles.buttonText}>Save</Text>
           </TouchableOpacity>
-        )}
-      />
+        </View>
+      )}
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, marginTop: 30 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  input: { borderWidth: 1, borderRadius: 5, padding: 10, marginBottom: 10 },
-  task: { padding: 10, fontSize: 18 },
-  done: { textDecorationLine: 'line-through', color: 'gray' },
-})
+  taskItem: { padding: 10, borderBottomWidth: 1, borderColor: '#ccc' },
+  taskText: { fontSize: 16 },
+  actions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 5 },
+  button: { backgroundColor: '#2f95dc', padding: 10, marginTop: 10, borderRadius: 5 },
+  buttonText: { color: 'white', textAlign: 'center' },
+  input: { borderWidth: 1, padding: 10, borderRadius: 5, marginTop: 10 },
+  editContainer: { marginTop: 20 },
+  summary: { textAlign: 'center', marginTop: 15, fontSize: 16, fontWeight: '500' },
+});
