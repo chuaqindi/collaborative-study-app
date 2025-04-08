@@ -52,23 +52,44 @@ export default function HomeScreen() {
           <View style={styles.sectionHeaderStyle}>
             <Text style={styles.sectionHeaderFont}>Today's Focus!</Text>
             <Text style={styles.viewAllButton} onPress={() => setShowAllTasks(!showAllTasks)}>
-      {showAllTasks ? 'Collapse' : 'View All'}
-    </Text>
+                {showAllTasks ? 'Collapse' : 'View All'}
+            </Text>
           </View>
 
-          {(showAllTasks ? tasks : tasks.slice(0, 2)).map(task => (
-            <LinearGradient
-              key={task.id}
-              colors={['#fbbf24', '#f59e0b']}
-              style={styles.taskCard}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Text style={[styles.text, { fontWeight: 'bold' }]}>To do: </Text>
-              <Text style={styles.text}>{task.title}</Text>
-            </LinearGradient>
-          ))}
+          {(() => {
+            const incompleteTasks = tasks.filter(task => !task.is_done);
+            const visibleTasks = showAllTasks ? incompleteTasks : incompleteTasks.slice(0, 2);
+
+            if (incompleteTasks.length === 0) {
+              return (
+                <LinearGradient
+                  colors={['#34d399', '#10b981']} // ✅ Updated: green success colors
+                  style={styles.taskCard}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>🎉 No outstanding tasks!</Text>
+                </LinearGradient>
+              );
+            }
+
+            return visibleTasks.map(task => (
+              <LinearGradient
+                key={task.id}
+                colors={['#fbbf24', '#f59e0b']}
+                style={styles.taskCard}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={[styles.text, { fontWeight: 'bold' }]}>To do: </Text>
+                <Text style={styles.text}>{task.title}</Text>
+              </LinearGradient>
+            ));
+          })()}
         </View>
+
+
+
 
         <View style={styles.section}>
           <View style = {styles.sectionHeaderStyle}>
