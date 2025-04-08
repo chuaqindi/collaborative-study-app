@@ -111,7 +111,7 @@ export default function FriendsScreen() {
     <View style={styles.container}>
       <LinearGradient colors={['#4f46e5', '#7c3aed']} style={styles.headerGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <View style={styles.headerTopRow}>
-          <Text style={styles.header}>👋 My Friends</Text>
+          <Text style={styles.header}>🤝  My Friends</Text>
         </View>
       </LinearGradient>
       <Text style = {styles.addFriendHeader}>Add Friend</Text>
@@ -122,6 +122,7 @@ export default function FriendsScreen() {
         onChangeText={setFriendEmail}
         style={styles.input}
         placeholderTextColor={'black'}
+        autoCapitalize='none'
       />
       </View>
 

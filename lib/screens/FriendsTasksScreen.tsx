@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { supabase } from '../supabase';
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function FriendsTasksScreen() {
   const [friendsTasks, setFriendsTasks] = useState<any[]>([]);
@@ -85,18 +87,38 @@ export default function FriendsTasksScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Friends' Task Progress</Text>
+      <LinearGradient colors={['#4f46e5', '#7c3aed']} style={styles.headerGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+              <View style={styles.headerTopRow}>
+                <Text style={styles.header}>🌱 Friends' Task Progress</Text>
+              </View>
+            </LinearGradient>
+
+
       {friendsTasks.length === 0 ? (
         <Text style={styles.subtext}>No friends found.</Text>
       ) : (
         <FlatList
           data={friendsTasks}
           keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.friendItem}>
-              <Text>{`${item.email}: ${item.completed}/${item.total} tasks completed`}</Text>
-            </View>
-          )}
+          renderItem={({ item }) => {
+            const progress = item.total > 0 ? item.completed / item.total : 0;
+            return (
+              <View style={styles.friendItem}>
+                <Text style={styles.friendEmail}>{item.email}</Text>
+                <View style={styles.progressBarBackground}>
+                  <LinearGradient
+                    colors={['#10b981','#065f46']} 
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.progressBarFill, { width: `${progress * 100}%` }]}
+                  />
+                </View>
+                <Text style={styles.taskText}>
+                  <Text style={styles.taskCompleted}>{item.completed}</Text> / {item.total} tasks completed
+                </Text>
+              </View>
+            );
+          }}
         />
       )}
     </View>
@@ -104,8 +126,51 @@ export default function FriendsTasksScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: 'white' },
+  container: { flex: 1, padding: 0, backgroundColor: 'white' },
   heading: { fontSize: 22, fontWeight: 'bold', marginBottom: 10 },
-  subtext: { fontSize: 16, color: 'gray' },
-  friendItem: { paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ccc' },
+  subtext: { fontSize: 16, color: 'gray', padding: 10, },
+  friendItem: { paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ccc' , padding: 10},
+  headerGradient: {
+    paddingHorizontal: 24,
+    paddingVertical: 50,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+  },
+  header: {fontSize: 24,color: 'white',fontWeight: '700',},
+  headerTopRow: {flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center',},
+
+  friendEmail: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#1f2937', // dark gray
+  },
+  progressBarBackground: {
+    height: 10,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginVertical: 6,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  taskText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000', // black
+    marginTop: 6,
+  },
+  taskCompleted: {
+    fontWeight: '700',
+    color: '#10b981', // black
+  },
+
+
 });

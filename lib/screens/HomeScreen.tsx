@@ -102,7 +102,7 @@ export default function HomeScreen() {
                     end={{ x: 1, y: 1 }}
                     >
       <View style={styles.headerTopRow}>
-        <Text style={styles.Header}>👋 My Tasks</Text>
+        <Text style={styles.Header}>🎯  My Tasks</Text>
       </View>
     </LinearGradient>
 
