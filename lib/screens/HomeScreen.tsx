@@ -30,7 +30,16 @@ export default function HomeScreen() {
   const addTask = async () => {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData.user?.id;
+    
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+    Alert.alert('Error', 'Please enter a task.');
+    return;
+    }
+    
     if (!userId || !title.trim()) return;
+
+    
 
     const { error } = await supabase.from('tasks').insert({
       user_id: userId,

@@ -42,7 +42,10 @@ export default function FriendsScreen() {
 
   const addFriend = async () => {
     const trimmedEmail = friendEmail.trim();
-    if (!trimmedEmail) return;
+    if (!trimmedEmail) {
+      Alert.alert('Error', 'Please enter an email address.');
+      return;
+    }
 
     const { data: profile, error } = await supabase
       .from('profiles')
