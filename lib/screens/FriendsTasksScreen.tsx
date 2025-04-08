@@ -18,26 +18,33 @@ export default function FriendsTasksScreen() {
     const userId = userData.user?.id;
     if (!userId) return;
 
-    // Fetch accepted friends with profile (email and id)
-    const { data: rawFriends, error } = await supabase
+    // Get all friendships where the user is sender or receiver
+    const { data: sent } = await supabase
       .from('friends')
-      .select(`friend_id, profiles:profiles!friends_friend_id_fkey(id,email)`)  // fetch profile
+      .select('friend_id, profiles:profiles!friends_friend_id_fkey(id,email)')
       .eq('user_id', userId)
       .eq('status', 'accepted');
 
-    if (error) {
-      console.error('Error fetching friends:', error);
-      return;
-    }
+    const { data: received } = await supabase
+      .from('friends')
+      .select('user_id, friend_id, profiles:profiles!friends_user_id_fkey(id,email)')
+      .eq('friend_id', userId)
+      .eq('status', 'accepted');
 
-    const friends: FriendWithProfile[] = (rawFriends ?? []).map(f => ({
-      friend_id: f.friend_id,
-      profiles: Array.isArray(f.profiles) ? f.profiles[0] : f.profiles,
-    }));
+    const friends: FriendWithProfile[] = [
+      ...(sent ?? []).map((f: any) => ({
+        friend_id: f.friend_id,
+        profiles: Array.isArray(f.profiles) ? f.profiles[0] : f.profiles,
+      })),
+      ...(received ?? []).map((f: any) => ({
+        friend_id: f.user_id,
+        profiles: Array.isArray(f.profiles) ? f.profiles[0] : f.profiles,
+      })),
+    ];
 
-    // Avoid duplicates by ensuring friend_id is unique
+    // Remove duplicate friends by profile ID (not friend_id)
     const uniqueFriends = Array.from(
-      new Map(friends.map(f => [f.friend_id, f])).values()
+      new Map(friends.map(f => [f.profiles?.id, f])).values()
     );
 
     const tasksStats = await Promise.all(
