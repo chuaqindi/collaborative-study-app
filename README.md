@@ -14,6 +14,10 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo install expo-linear-gradient
    ```
 
+   ```
+   npm install react-native-maps expo-location
+
+   ```
 
 2. Start the app
 
