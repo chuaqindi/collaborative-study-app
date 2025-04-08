@@ -10,7 +10,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 // TODO: Replace with your actual Google Maps API Key
@@ -21,6 +21,8 @@ interface Library {
   name: string;
   latitude: number;
   longitude: number;
+  todayOpeningHours?: string; // Specific hours for today
+  isOpenNow?: boolean; // Current open status
 }
 
 const LibraryScreen = () => {
@@ -113,14 +115,78 @@ const LibraryScreen = () => {
       }
 
       if (placesData.results && placesData.results.length > 0) {
-          const fetchedLibraries: Library[] = placesData.results.map((place: any) => ({
-              id: place.place_id, // Use place_id as unique key
-              name: place.name,
-              latitude: place.geometry.location.lat,
-              longitude: place.geometry.location.lng,
-          }));
-          setLibraries(fetchedLibraries);
-          console.log(`Found ${fetchedLibraries.length} libraries.`);
+          // Fetch details (including opening hours) for each place found
+          const places = placesData.results;
+          const detailPromises = places.map(async (place: any) => {
+            // Request the main opening_hours field, which includes open_now and weekday_text
+            const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,opening_hours,geometry&key=${GOOGLE_MAPS_API_KEY}`;
+            const detailResponse = await fetch(detailUrl);
+            const detailData = await detailResponse.json();
+            
+            let todayHours = 'Hours unavailable'; // Default fallback
+            let isOpen = false;
+
+            if (detailData.status === 'OK' && detailData.result) {
+               const openingHoursData = detailData.result.opening_hours;
+               if (openingHoursData) {
+                 isOpen = openingHoursData.open_now ?? false;
+                 const weekdayText = openingHoursData.weekday_text;
+
+                 if (weekdayText && weekdayText.length === 7) { 
+                   const jsDayIndex = new Date().getDay(); 
+                   const googleApiDayIndex = (jsDayIndex === 0) ? 6 : jsDayIndex - 1; 
+                   
+                   const todayString = weekdayText[googleApiDayIndex];
+
+                   if (todayString) {
+                     const colonIndex = todayString.indexOf(':');
+                     if (colonIndex !== -1) {
+                         let hoursPart = todayString.substring(colonIndex + 1).trim();
+                         if (hoursPart) {
+                             todayHours = hoursPart; 
+                         } else {
+                             todayHours = 'Hours unavailable'; 
+                         }
+                     } else {
+                        todayHours = todayString.trim(); 
+                     }
+                   } else {
+                      todayHours = 'Hours unavailable'; 
+                   }
+                 } else {
+                    todayHours = 'Hours unavailable'; 
+                 }
+               } else {
+                 isOpen = false; 
+                 todayHours = 'Hours unavailable'; 
+               }
+
+               return {
+                 id: place.place_id,
+                 name: detailData.result.name,
+                 latitude: detailData.result.geometry.location.lat,
+                 longitude: detailData.result.geometry.location.lng,
+                 todayOpeningHours: todayHours,
+                 isOpenNow: isOpen,
+               };
+            } else {
+               console.warn(`Could not fetch details for place ${place.place_id}: ${detailData.error_message || detailData.status}`);
+               // Return basic info if details fail
+                return {
+                    id: place.place_id,
+                    name: place.name, // Use original name if details fail
+                    latitude: place.geometry.location.lat,
+                    longitude: place.geometry.location.lng,
+                    todayOpeningHours: 'Not available',
+                    isOpenNow: false,
+                 };
+            }
+          });
+
+          const fetchedLibrariesWithDetails: Library[] = await Promise.all(detailPromises);
+
+          setLibraries(fetchedLibrariesWithDetails);
+          console.log(`Found ${fetchedLibrariesWithDetails.length} libraries with details.`);
            // Keep region centered on the geocoded postal code
       } else {
           setLibraries([]);
@@ -159,7 +225,19 @@ const LibraryScreen = () => {
                   longitude: library.longitude,
                 }}
                 title={library.name}
-              />
+              >
+                <Callout tooltip>
+                  <View style={styles.calloutView}>
+                    <Text style={styles.calloutTitle}>{library.name}</Text>
+                    <Text style={[styles.calloutStatus, { color: library.isOpenNow ? 'green' : 'red' }]}>
+                       {library.isOpenNow ? 'Open' : 'Closed'}
+                    </Text>
+                    <Text style={styles.calloutDescription}>
+                       {library.todayOpeningHours || 'Hours not available'} 
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
             ))}
           </MapView>
         ) : (
@@ -213,6 +291,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.7)'
+  },
+  calloutView: {
+    padding: 10,
+    backgroundColor: 'white',
+    borderRadius: 6,
+    borderColor: '#ccc',
+    borderWidth: 0.5,
+    width: 200,
+  },
+  calloutTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  calloutDescription: {
+    fontSize: 14,
+    marginBottom: 3,
+  },
+  calloutStatus: {
+    fontSize: 14,
+    fontWeight: 'bold',
   }
 });
 
