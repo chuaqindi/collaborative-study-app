@@ -145,7 +145,7 @@ export default function HomeScreen() {
         )}
       />
 
-
+      <View style={styles.addTaskSection}>
       <Text style = {styles.addTaskHeader}>Add Tasks</Text>
       <TextInput
         placeholder="New Task"
@@ -158,11 +158,12 @@ export default function HomeScreen() {
       <TouchableOpacity onPress={addTask} style={styles.button}>
         <Text style={styles.buttonText}>Add Task</Text>
       </TouchableOpacity>
+      
 
       <Text style={styles.summary}>
       <Text style={styles.countText}>{`${completedCount}/${totalCount}`}</Text> tasks completed
       </Text>
-
+      </View>
       {editingTask && (
         <View style={styles.editContainer}>
           <TextInput
@@ -209,8 +210,8 @@ const styles = StyleSheet.create({
   editContainer: { marginTop: 20 },
   summary: {
     textAlign: 'center',
-    marginTop: 20,          // to shift the 'add task' words up LOL
-    marginBottom: 20,
+    marginTop: 5,          // to shift the 'add task' words up LOL
+    marginBottom: 10,
     fontSize: 20,          // 🔼 Bigger text
     fontWeight: '600',     // Slightly bolder
     color: '#374151',      // Tailwind gray-700 (looks nice)
@@ -239,5 +240,21 @@ const styles = StyleSheet.create({
   headerTopRow: {flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center',},
   currentTaskHeader: {paddingTop: 20, fontSize: 24, fontWeight:'bold', paddingLeft: 10,},
   addTaskHeader: {paddingTop: 0, fontSize: 24, fontWeight:'bold', paddingLeft: 10,},
+
+  addTaskSection: {
+    backgroundColor: '#F3F4F6', // A soft background for separation (Tailwind gray-100)
+    paddingTop: 10,
+    paddingBottom: 0,
+    paddingHorizontal: 10,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+
 
 });
