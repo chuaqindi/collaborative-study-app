@@ -78,6 +78,20 @@ export default function HomeScreen() {
           <LinearGradient colors={['#7c3aed', '#a855f7']} style={styles.statCard} start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
           <Text style={styles.statNumber}>{completedCount}/{totalCount}</Text>
             <Text style={styles.statLabel}>Tasks Completed</Text>
+
+            {/* Progress Bar */}
+            <View style={styles.progressBarBackground}>
+              <LinearGradient
+                colors={['#10b981', '#059669']} // emerald → deep green
+
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={[
+                  styles.progressBarFill,
+                  { width: `${(completedCount / (totalCount || 1)) * 100}%` },
+                ]}
+              />
+            </View>
           </LinearGradient>
         </View>
 
@@ -214,5 +228,17 @@ const styles = StyleSheet.create({
   },
 
 
+  progressBarBackground: {
+    height: 12,
+    backgroundColor: '#e5e7eb', // light gray
+    borderRadius: 6,
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+  
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 6,
+  },
 
 })
