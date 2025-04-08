@@ -10,6 +10,7 @@ import HomeScreen from './lib/screens/HomeScreen'
 import FriendsScreen from './lib/screens/FriendsScreen'
 import FriendsTasksScreen from './lib/screens/FriendsTasksScreen'
 import HomePageScreen from './lib/screens/HomePageScreen'
+import LibraryScreen from './lib/screens/LibraryScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -29,6 +30,8 @@ function MainTabs() {
             iconName = 'home'
           } else if (route.name === 'Friends Tasks') {
             iconName = 'library-outline'
+          } else if (route.name === 'Library') {
+            iconName = 'map-outline'
           }
 
           return <Ionicons name={iconName as any} size={size} color={color} />
@@ -41,8 +44,7 @@ function MainTabs() {
       <Tab.Screen name="Tasks" component={HomeScreen} />
       <Tab.Screen name="Friends" component={FriendsScreen} />
       <Tab.Screen name="Friends Tasks" component={FriendsTasksScreen} />
-
-
+      <Tab.Screen name="Library" component={LibraryScreen} />
     </Tab.Navigator>
   )
 }
