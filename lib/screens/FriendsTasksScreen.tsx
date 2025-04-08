@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 import { supabase } from '../supabase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 
 export default function FriendsTasksScreen() {
@@ -81,9 +83,11 @@ export default function FriendsTasksScreen() {
     setFriendsTasks(tasksStats);
   };
 
-  useEffect(() => {
-    fetchFriendsWithTaskStats();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchFriendsWithTaskStats();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
