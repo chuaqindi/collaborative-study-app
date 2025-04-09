@@ -1,43 +1,44 @@
-import React from 'react'
-import { NavigationContainer } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Ionicons } from '@expo/vector-icons'
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
-import SignUpScreen from './lib/screens/SignUpScreen'
-import LoginScreen from './lib/screens/LoginScreen'
-import HomeScreen from './lib/screens/HomeScreen'
-import FriendsScreen from './lib/screens/FriendsScreen'
-import FriendsTasksScreen from './lib/screens/FriendsTasksScreen'
-import HomePageScreen from './lib/screens/HomePageScreen'
-import LibraryScreen from './lib/screens/LibraryScreen'
+import SignUpScreen from './lib/screens/SignUpScreen';
+import LoginScreen from './lib/screens/LoginScreen';
+import HomeScreen from './lib/screens/HomeScreen';
+import FriendsScreen from './lib/screens/FriendsScreen';
+import FriendsTasksScreen from './lib/screens/FriendsTasksScreen';
+import HomePageScreen from './lib/screens/HomePageScreen';
+import LibraryScreen from './lib/screens/LibraryScreen';
 
-const Stack = createNativeStackNavigator()
-const Tab = createBottomTabNavigator()
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName
+          let iconName;
 
           if (route.name === 'Tasks') {
-            iconName = 'document-text-outline'
+            iconName = 'document-text-outline';
           } else if (route.name === 'Friends') {
-            iconName = 'people'
+            iconName = 'people';
           } else if (route.name === 'Home Page') {
-            iconName = 'home'
+            iconName = 'home';
           } else if (route.name === 'Friends Tasks') {
-            iconName = 'library-outline'
+            iconName = 'library-outline';
           } else if (route.name === 'Library') {
-            iconName = 'map-outline'
+            iconName = 'map-outline';
           }
 
-          return <Ionicons name={iconName as any} size={size} color={color} />
+          return <Ionicons name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#2f95dc',
         tabBarInactiveTintColor: 'gray',
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Home Page" component={HomePageScreen} />
@@ -46,7 +47,7 @@ function MainTabs() {
       <Tab.Screen name="Friends Tasks" component={FriendsTasksScreen} />
       <Tab.Screen name="Library" component={LibraryScreen} />
     </Tab.Navigator>
-  )
+  );
 }
 
 export default function App() {
@@ -62,5 +63,5 @@ export default function App() {
         />
       </Stack.Navigator>
     </NavigationContainer>
-  )
+  );
 }

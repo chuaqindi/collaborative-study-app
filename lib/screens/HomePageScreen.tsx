@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image , FlatList, TouchableOpacity, Alert, TextInput} from 'react-native';
+import React, { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons, MaterialIcons, FontAwesome } from '@expo/vector-icons';
 import { supabase } from '../supabase';
 import { getTaskCompletionCount } from '../../utils/taskUtils';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 
-
-export default function HomeScreen() {
-
+export default function HomePageScreen({ navigation }: any) {
   const [tasks, setTasks] = useState<any[]>([]);
   const [showAllTasks, setShowAllTasks] = useState(false);
 
@@ -29,41 +33,60 @@ export default function HomeScreen() {
         else console.error('Error fetching tasks:', error);
       };
 
-    fetchTasks();
-  }, []) );
+      fetchTasks();
+    }, [])
+  );
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+  };
 
   const { completedCount, totalCount } = getTaskCompletionCount(tasks);
 
   return (
-    
-    
-    <View style={styles.container}> 
-      <ScrollView style={styles.scrollView}> 
-        <LinearGradient colors={['#4f46e5', '#7c3aed']} style={styles.headerGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        <LinearGradient
+          colors={['#4f46e5', '#7c3aed']}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
           <View style={styles.headerTopRow}>
+            <TouchableOpacity onPress={handleSignOut}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
             <Text style={styles.greeting}>👋 Welcome back!</Text>
-            <Image source={{ uri: 'https://i.pravatar.cc/200' }} style={styles.profileImage}/>
+            <Image
+              source={{ uri: 'https://i.pravatar.cc/200' }}
+              style={styles.profileImage}
+            />
           </View>
-          
           <Text style={styles.subGreeting}>Let's start learning! 🎉</Text>
         </LinearGradient>
-  
+
         <View style={styles.section}>
           <View style={styles.sectionHeaderStyle}>
             <Text style={styles.sectionHeaderFont}>Today's Focus!</Text>
-            <Text style={styles.viewAllButton} onPress={() => setShowAllTasks(!showAllTasks)}>
-                {showAllTasks ? 'Collapse' : 'View All'}
+            <Text
+              style={styles.viewAllButton}
+              onPress={() => setShowAllTasks(!showAllTasks)}
+            >
+              {showAllTasks ? 'Collapse' : 'View All'}
             </Text>
           </View>
 
           {(() => {
-            const incompleteTasks = tasks.filter(task => !task.is_done);
-            const visibleTasks = showAllTasks ? incompleteTasks : incompleteTasks.slice(0, 2);
+            const incompleteTasks = tasks.filter((task) => !task.is_done);
+            const visibleTasks = showAllTasks
+              ? incompleteTasks
+              : incompleteTasks.slice(0, 2);
 
             if (incompleteTasks.length === 0) {
               return (
                 <LinearGradient
-                  colors={['#34d399', '#10b981']} // ✅ Updated: green success colors
+                  colors={['#34d399', '#10b981']}
                   style={styles.taskCard}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -73,7 +96,7 @@ export default function HomeScreen() {
               );
             }
 
-            return visibleTasks.map(task => (
+            return visibleTasks.map((task) => (
               <LinearGradient
                 key={task.id}
                 colors={['#fbbf24', '#f59e0b']}
@@ -88,23 +111,23 @@ export default function HomeScreen() {
           })()}
         </View>
 
-
-
-
         <View style={styles.section}>
-          <View style = {styles.sectionHeaderStyle}>
+          <View style={styles.sectionHeaderStyle}>
             <Text style={styles.sectionHeaderFont}>Task Progress</Text>
           </View>
-          
-          <LinearGradient colors={['#7c3aed', '#a855f7']} style={styles.statCard} start={{ x: 0, y: 0 }}  end={{ x: 1, y: 1 }}>
-          <Text style={styles.statNumber}>{completedCount}/{totalCount}</Text>
+
+          <LinearGradient
+            colors={['#7c3aed', '#a855f7']}
+            style={styles.statCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Text style={styles.statNumber}>{completedCount}/{totalCount}</Text>
             <Text style={styles.statLabel}>Tasks Completed</Text>
 
-            {/* Progress Bar */}
             <View style={styles.progressBarBackground}>
               <LinearGradient
-                colors={['#10b981', '#059669']} // emerald → deep green
-
+                colors={['#10b981', '#059669']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[
@@ -118,23 +141,25 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionHeaderFont}>Study Streak</Text>
-
-          <LinearGradient colors={['#4f46e5', '#6366f1']} style={styles.streakCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+          <LinearGradient
+            colors={['#4f46e5', '#6366f1']}
+            style={styles.streakCard}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
             <Text style={styles.streakNumber}>1</Text>
             <Text style={styles.streakLabel}>days!</Text>
           </LinearGradient>
         </View>
-
       </ScrollView>
-    </View>
-    
-  )
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'white' },
-  scrollView: {flex: 1,},
-  text: {fontSize: 16,},
+  scrollView: { flex: 1 },
+  text: { fontSize: 16 },
   headerGradient: {
     paddingHorizontal: 24,
     paddingVertical: 28,
@@ -146,15 +171,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
   },
-  
-  header: { justifyContent: 'center',},
-
   headerTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  
   profileImage: {
     width: 50,
     height: 50,
@@ -162,30 +183,38 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
-
-  greeting: {fontSize: 24,color: 'white',fontWeight: '700',},
-
-  subGreeting: {fontSize: 16,color: '#e0e7ff',marginTop: 8,},
+  greeting: {
+    fontSize: 24,
+    color: 'white',
+    fontWeight: '700',
+  },
+  subGreeting: { fontSize: 16, color: '#e0e7ff', marginTop: 8 },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'white',
+    textDecorationLine: 'underline',
+  },
   section: {
     padding: 5,
     gap: 12,
     backgroundColor: 'white',
-    flex:2,
+    flex: 2,
     paddingTop: 20,
     paddingBottom: 20,
-
   },
-
-  sectionHeaderFont: { color: 'black',fontSize: 24,fontWeight: 'bold',  },
-  sectionHeaderStyle: { flexDirection: 'row',justifyContent: 'space-between',alignItems: 'center'},
-
+  sectionHeaderFont: { color: 'black', fontSize: 24, fontWeight: 'bold' },
+  sectionHeaderStyle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   viewAllButton: {
     paddingTop: 15,
     fontSize: 12,
-    color: '#6366f1', // Indigo-500
+    color: '#6366f1',
     fontWeight: '600',
   },
-
   taskCard: {
     padding: 20,
     borderRadius: 16,
@@ -195,7 +224,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
   statCard: {
     flex: 1,
     padding: 16,
@@ -205,7 +233,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
-    
   },
   statNumber: {
     fontFamily: 'Inter_700Bold',
@@ -214,15 +241,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     flexDirection: 'row',
   },
-
   statLabel: {
     fontFamily: 'Inter_400Regular',
     fontSize: 14,
     color: '#e0e7ff',
     marginTop: 4,
-    fontWeight: 'bold', 
+    fontWeight: 'bold',
   },
-
   streakCard: {
     padding: 24,
     borderRadius: 16,
@@ -233,7 +258,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-
   streakNumber: {
     fontFamily: 'Inter_700Bold',
     fontSize: 36,
@@ -247,19 +271,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: 'bold',
   },
-
-
   progressBarBackground: {
     height: 12,
-    backgroundColor: '#e5e7eb', // light gray
+    backgroundColor: '#e5e7eb',
     borderRadius: 6,
     overflow: 'hidden',
     marginTop: 12,
   },
-  
   progressBarFill: {
     height: '100%',
     borderRadius: 6,
   },
-
-})
+});
