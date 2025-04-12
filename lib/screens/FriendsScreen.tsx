@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
   headerGradient: {
     paddingHorizontal: 24,
-    paddingVertical: 50,
+    paddingVertical: 60,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 8,

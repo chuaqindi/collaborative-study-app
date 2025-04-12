@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
 
   HeaderGradient: {
     paddingHorizontal: 24,
-    paddingVertical: 50,
+    paddingVertical: 60,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 8,

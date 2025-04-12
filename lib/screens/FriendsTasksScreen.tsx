@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   friendItem: { paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ccc' , padding: 10},
   headerGradient: {
     paddingHorizontal: 24,
-    paddingVertical: 50,
+    paddingVertical: 60,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 8,

@@ -45,7 +45,7 @@ export default function HomePageScreen({ navigation }: any) {
   const { completedCount, totalCount } = getTaskCompletionCount(tasks);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <LinearGradient
           colors={['#4f46e5', '#7c3aed']}
@@ -53,17 +53,21 @@ export default function HomePageScreen({ navigation }: any) {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <View style={styles.headerTopRow}>
-            <TouchableOpacity onPress={handleSignOut}>
-              <Text style={styles.signOutText}>Sign Out</Text>
-            </TouchableOpacity>
+          <View style={styles.headerContent}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={handleSignOut}>
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </TouchableOpacity>
+
+              <Image
+                source={{ uri: 'https://i.pravatar.cc/200' }}
+                style={styles.profileImage}
+              />
+            </View>
+
             <Text style={styles.greeting}>👋 Welcome back!</Text>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/200' }}
-              style={styles.profileImage}
-            />
+            <Text style={styles.subGreeting}>Let's start learning! 🎉</Text>
           </View>
-          <Text style={styles.subGreeting}>Let's start learning! 🎉</Text>
         </LinearGradient>
 
         <View style={styles.section}>
@@ -152,7 +156,7 @@ export default function HomePageScreen({ navigation }: any) {
           </LinearGradient>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -162,7 +166,7 @@ const styles = StyleSheet.create({
   text: { fontSize: 16 },
   headerGradient: {
     paddingHorizontal: 24,
-    paddingVertical: 28,
+    paddingVertical: 45,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 8,
@@ -171,30 +175,55 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
   },
-  headerTopRow: {
+
+  headerContent: {
+    marginTop: 20,
+    gap: 6,
+  },
+
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  profileImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  greeting: {
-    fontSize: 24,
-    color: 'white',
-    fontWeight: '700',
-  },
-  subGreeting: { fontSize: 16, color: '#e0e7ff', marginTop: 8 },
+
+
   signOutText: {
     fontSize: 14,
     fontWeight: 'bold',
     color: 'white',
     textDecorationLine: 'underline',
+    marginBottom: 4,
   },
+
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#fff',
+    marginLeft: 12,
+  },
+  
+  greeting: {
+    fontSize: 24,
+    color: 'white',
+    fontWeight: '700',
+    marginTop: 8,
+  },
+  
+  subGreeting: {
+    fontSize: 16,
+    color: '#e0e7ff',
+    marginTop: 4,
+  },
+
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+ 
   section: {
     padding: 5,
     gap: 12,
